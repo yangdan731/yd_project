@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# python extract_from_bag.py D:\GraduationProjectCode\dataset\real_data\wheelchock.bag -o extracted_data --step 18 原本1800帧，步长改成18，总共提取100帧
+# python extract_from_bag.py D:\GraduationProjectCode\dataset\real_data\wheelchock.bag -o extracted_data --step 18 原1800帧，步长改成18，总共提取100帧
 
 import pyrealsense2 as rs
 import cv2
@@ -96,8 +96,8 @@ def extract_bag(bag_path, output_dir, step=1, max_frames=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="从 RealSense .bag 文件中提取对齐的 RGB 和深度图")
     parser.add_argument("bag_file", help="输入 .bag 文件路径")
-    parser.add_argument("-o", "--output", default="extracted_data", help="输出目录（默认: extracted_data）")
-    parser.add_argument("--step", type=int, default=1, help="每隔 step 帧保存一帧（默认 1）")
+    parser.add_argument("-o", "--output", default="extracted_data", help="输出目录")
+    parser.add_argument("--step", type=int, default=1, help="每隔step帧保存一帧")
     parser.add_argument("--max_frames", type=int, default=None, help="最多保存的帧数（默认 None 表示不限制）")
     args = parser.parse_args()
 

@@ -10,22 +10,22 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
-# ==================== 配置参数 ====================
-MODEL_PATH = r"D:/GraduationProjectCode/kaggle/download/trained_weights/wheelchock4_lab_grass_best.pt"  # 确保是 YOLOv8-seg 模型
+# 配置参数
+MODEL_PATH = r"yolov8_model/wheelchock5_best.pt"
 RGB_PATH = r"extracted_data2/rgb/frame_000040.png"
 DEPTH_PATH = r"extracted_data2/depth/frame_000040.png"
 
-# 相机内参（从 camera_intrinsics.txt 读取）
+# 相机内参
 fx = 913.0030517578125
 fy = 911.9224243164062
 cx = 635.4708251953125
 cy = 377.90032958984375
 depth_scale = 0.0010000000474974513  # 深度图单位：毫米 → 米
 
-# ==================== 加载模型 ====================
+# 加载模型
 model = YOLO(MODEL_PATH)
 
-# ==================== 读取图像 ====================
+# 读取图像
 rgb = cv2.imread(RGB_PATH)
 depth_raw = cv2.imread(DEPTH_PATH, cv2.IMREAD_UNCHANGED)  # 16位，单位毫米
 
@@ -129,7 +129,7 @@ print(f"Yaw  : {yaw_deg:.2f}°")   #  (绕Z轴)
 # visualize_points(points)
 
 
-# ==================== 可视化（用于论文） ====================
+# ==================== 可视化 ====================
 # 将 mask 缩放到原始图像尺寸 (720, 1280)
 mask_original = cv2.resize(mask.astype(np.uint8), (rgb.shape[1], rgb.shape[0]), interpolation=cv2.INTER_NEAREST)
 mask_original = (mask_original > 0.5).astype(np.uint8)   # 确保二值
