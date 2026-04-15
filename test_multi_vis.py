@@ -7,7 +7,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 # 配置参数
 MODEL_PATH = r"yolov8_model/wheelchock5_best.pt"
-RGB_DIR = r"extracted_data3/rgb"          # 存放多帧 RGB 图像的目录
+RGB_DIR = r"extracted_data2/rgb"          # 存放多帧 RGB 图像的目录
 OUTPUT_DIR = r"visualization/multi_vis2"  # 输出目录
 
 # 创建输出目录
