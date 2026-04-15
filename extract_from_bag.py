@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# python extract_from_bag.py D:\GraduationProjectCode\dataset\real_data\wheelchock.bag -o extracted_data --step 18 原1800帧，步长改成18，总共提取100帧
+# python extract_from_bag.py D:\GraduationProjectCode\dataset\real_data\wheelchock.bag -o extracted_data --step 10 原1800帧，步长改成18，总共提取100帧
 
 import pyrealsense2 as rs
 import cv2

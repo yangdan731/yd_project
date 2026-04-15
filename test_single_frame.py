@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 
 # 配置参数
 MODEL_PATH = r"yolov8_model/wheelchock5_best.pt"
-RGB_PATH = r"extracted_data2/rgb/frame_000040.png"
-DEPTH_PATH = r"extracted_data2/depth/frame_000040.png"
+RGB_PATH = r"extracted_data/extracted_data2/rgb/frame_000070.png"
+DEPTH_PATH = r"extracted_data/extracted_data2/depth/frame_000070.png"
 
 # 相机内参
 fx = 913.0030517578125
@@ -108,11 +108,11 @@ print(f"Pitch: {pitch_deg:.2f}°")   #  (绕Y轴)
 print(f"Yaw  : {yaw_deg:.2f}°")   #  (绕Z轴)
 
 # ==================== 可选：保存点云（用于可视化） ====================
-# try:当前base环境的python版本不支持open3d，换用下面的matplotlib
-#     import open3d as o3d
-#     pcd = o3d.geometry.PointCloud()
-#     pcd.points = o3d.utility.Vector3dVector(points)
-#     o3d.visualization.draw_geometries([pcd])
+# try:
+import open3d as o3d
+pcd = o3d.geometry.PointCloud()
+pcd.points = o3d.utility.Vector3dVector(points)
+o3d.visualization.draw_geometries([pcd])
 # except ImportError:
 #     print("未安装 open3d，跳过点云可视化。")
 # 点云可视化方式2：matplotlib
@@ -128,14 +128,13 @@ print(f"Yaw  : {yaw_deg:.2f}°")   #  (绕Z轴)
 # # 直接调用
 # visualize_points(points)
 
-
 # ==================== 可视化 ====================
 # 将 mask 缩放到原始图像尺寸 (720, 1280)
 mask_original = cv2.resize(mask.astype(np.uint8), (rgb.shape[1], rgb.shape[0]), interpolation=cv2.INTER_NEAREST)
 mask_original = (mask_original > 0.5).astype(np.uint8)   # 确保二值
 
 # 创建输出文件夹
-vis_dir = "visualization"
+vis_dir = "visualization/visualization"
 os.makedirs(vis_dir, exist_ok=True)
 
 # 1. RGB + 掩码叠加
@@ -188,3 +187,79 @@ plt.savefig(os.path.join(vis_dir, "4_pose.png"), dpi=300)
 plt.close()
 
 print(f"可视化图片已保存到 {vis_dir}/")
+
+# ==================== 使用 Open3D 进行 6DoF 可视化 ====================
+import open3d as o3d
+
+def create_arrow(origin, direction, color, length=0.1, cylinder_radius=0.005, cone_radius=0.01):
+    """创建带颜色的箭头"""
+    # 归一化方向向量
+    direction = direction / np.linalg.norm(direction)
+    # 默认箭头指向 +Z
+    z_axis = np.array([0, 0, 1])
+    # 计算旋转矩阵
+    v = np.cross(z_axis, direction)
+    s = np.linalg.norm(v)
+    if s == 0:
+        rot = np.eye(3)
+    else:
+        c = np.dot(z_axis, direction)
+        v_skew = np.array([[0, -v[2], v[1]],
+                           [v[2], 0, -v[0]],
+                           [-v[1], v[0], 0]])
+        rot = np.eye(3) + v_skew + np.dot(v_skew, v_skew) * (1 - c) / (s * s)
+    # 创建箭头
+    arrow = o3d.geometry.TriangleMesh.create_arrow(
+        cylinder_radius=cylinder_radius,
+        cone_radius=cone_radius,
+        cylinder_height=length * 0.9,
+        cone_height=length * 0.1
+    )
+    arrow.rotate(rot, center=(0, 0, 0))
+    arrow.translate(origin)
+    arrow.paint_uniform_color(color)
+    return arrow
+
+def visualize_6dof_open3d(points, centroid, axes, camera_origin=(0, 0, 0), axis_length=0.15):
+    """使用 Open3D 可视化点云和坐标系"""
+    # 点云（采样以加快显示）
+    if len(points) > 50000:
+        idx = np.random.choice(len(points), 50000, replace=False)
+        points_vis = points[idx]
+    else:
+        points_vis = points
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(points_vis)
+    pcd.paint_uniform_color([0.7, 0.7, 0.7])  # 灰色
+
+    # 几何体列表
+    geometries = [pcd]
+
+    # 相机坐标系（红绿蓝箭头）
+    colors = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    camera_axes = np.eye(3)  # 单位矩阵，列向量
+    for i in range(3):
+        arrow = create_arrow(camera_origin, camera_axes[:, i], colors[i], length=axis_length)
+        geometries.append(arrow)
+
+    # 物体局部坐标系（同样颜色，但使用稍细的箭头，并添加虚线效果？Open3D 不支持虚线，可用细圆柱代替）
+    for i in range(3):
+        arrow = create_arrow(centroid, axes[:, i], colors[i], length=axis_length, cylinder_radius=0.003)
+        geometries.append(arrow)
+
+    # 标记质心（红色小球）
+    sphere = o3d.geometry.TriangleMesh.create_sphere(radius=0.01)
+    sphere.translate(centroid)
+    sphere.paint_uniform_color([1, 0, 0])
+    geometries.append(sphere)
+
+    # 显示
+    o3d.visualization.draw_geometries(geometries,
+                                      window_name="6DoF Visualization (Open3D)",
+                                      width=1024, height=768)
+
+# 调用可视化（确保 points, centroid, axes 已定义）
+if len(points) > 0:
+    visualize_6dof_open3d(points, centroid, axes, camera_origin=(0, 0, 0), axis_length=0.15)
+else:
+    print("没有有效点云，无法进行 6DoF 可视化。")
